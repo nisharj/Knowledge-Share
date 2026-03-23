@@ -18,14 +18,25 @@ const Dashboard = () => {
   const [form, setForm] = useState(initialForm);
   const [editingId, setEditingId] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [loadingResources, setLoadingResources] = useState(true);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
   const fetchResources = async () => {
-    const response = await api.get("/resources", {
-      params: { page: 1, limit: 100 },
-    });
-    setResources(response.data.resources);
+    try {
+      setLoadingResources(true);
+      const response = await api.get("/resources", {
+        params: { page: 1, limit: 100 },
+      });
+      setResources(response.data.resources);
+    } catch (requestError) {
+      setError(
+        requestError.response?.data?.message ||
+          "Failed to load resources. Refresh and try again.",
+      );
+    } finally {
+      setLoadingResources(false);
+    }
   };
 
   useEffect(() => {
@@ -38,6 +49,7 @@ const Dashboard = () => {
       (sum, resource) => sum + (resource.views || 0),
       0,
     );
+
     return { totalResources, totalViews };
   }, [resources]);
 
@@ -60,6 +72,12 @@ const Dashboard = () => {
     }
     if (!form.link.trim()) {
       setError("Link is required");
+      return false;
+    }
+    try {
+      new URL(form.link);
+    } catch (_error) {
+      setError("Enter a valid resource link");
       return false;
     }
     if (!form.type) {
@@ -96,9 +114,7 @@ const Dashboard = () => {
       setForm(initialForm);
       setEditingId(null);
       await fetchResources();
-
-      // Clear success message after 3 seconds
-      setTimeout(() => setSuccess(""), 3000);
+      window.setTimeout(() => setSuccess(""), 3000);
     } catch (err) {
       setError(
         err.response?.data?.message || err.message || "Failed to save resource",
@@ -120,14 +136,27 @@ const Dashboard = () => {
     });
     setError("");
     setSuccess("");
+    document.getElementById("editor")?.scrollIntoView({ behavior: "smooth" });
   };
 
   const removeResource = async (id) => {
+    const shouldDelete = window.confirm(
+      "Delete this resource? This action cannot be undone.",
+    );
+
+    if (!shouldDelete) {
+      return;
+    }
+
     try {
       await api.delete(`/resources/${id}`);
       await fetchResources();
       setSuccess("Resource deleted successfully!");
-      setTimeout(() => setSuccess(""), 3000);
+      if (editingId === id) {
+        setEditingId(null);
+        setForm(initialForm);
+      }
+      window.setTimeout(() => setSuccess(""), 3000);
     } catch (err) {
       setError(err.response?.data?.message || "Failed to delete resource");
     }
@@ -135,7 +164,7 @@ const Dashboard = () => {
 
   return (
     <main className="dashboard-page">
-      <aside className="sidebar">
+      <aside className="sidebar dashboard-sidebar">
         <h2>Admin Panel</h2>
         <nav>
           <a href="#stats">Dashboard</a>
@@ -146,7 +175,7 @@ const Dashboard = () => {
           <Link className="btn ghost" to="/">
             Home
           </Link>
-          <button className="btn" onClick={logout}>
+          <button type="button" className="btn" onClick={logout}>
             Logout
           </button>
         </div>
@@ -242,27 +271,50 @@ const Dashboard = () => {
               <span>Views</span>
               <span>Actions</span>
             </div>
-            {resources.map((resource) => (
-              <div className="table-row" key={resource._id}>
-                <span>{resource.title}</span>
-                <span>{resource.type}</span>
-                <span>{resource.views || 0}</span>
-                <span className="row-actions gap-5">
-                  <button
-                    className="btn ghost"
-                    onClick={() => startEdit(resource)}
-                  >
-                    Edit
-                  </button>
-                  <button
-                    className="btn"
-                    onClick={() => removeResource(resource._id)}
-                  >
-                    Delete
-                  </button>
-                </span>
-              </div>
-            ))}
+
+            {loadingResources ? (
+              <p className="state-text table-state">Loading resources...</p>
+            ) : resources.length === 0 ? (
+              <p className="state-text table-state">
+                No resources have been added yet.
+              </p>
+            ) : (
+              resources.map((resource) => (
+                <div className="table-row" key={resource._id}>
+                  <div className="table-cell">
+                    <span className="cell-label">Title</span>
+                    <span className="cell-value">{resource.title}</span>
+                  </div>
+                  <div className="table-cell">
+                    <span className="cell-label">Type</span>
+                    <span className="cell-value">{resource.type}</span>
+                  </div>
+                  <div className="table-cell">
+                    <span className="cell-label">Views</span>
+                    <span className="cell-value">{resource.views || 0}</span>
+                  </div>
+                  <div className="table-cell">
+                    <span className="cell-label">Actions</span>
+                    <span className="row-actions">
+                      <button
+                        type="button"
+                        className="btn ghost"
+                        onClick={() => startEdit(resource)}
+                      >
+                        Edit
+                      </button>
+                      <button
+                        type="button"
+                        className="btn"
+                        onClick={() => removeResource(resource._id)}
+                      >
+                        Delete
+                      </button>
+                    </span>
+                  </div>
+                </div>
+              ))
+            )}
           </div>
         </section>
       </section>

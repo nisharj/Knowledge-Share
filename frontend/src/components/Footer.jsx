@@ -1,3 +1,5 @@
+import { Link } from "react-router-dom";
+
 const Footer = () => {
   const currentYear = new Date().getFullYear();
 
@@ -5,20 +7,20 @@ const Footer = () => {
     <footer className="footer">
       <div className="footer-wrapper">
         <div className="footer-logo">
-          <h4>Knowledge Hub</h4>
+          <h4>CurioHub</h4>
         </div>
 
         <nav className="footer-nav">
-          <a href="#/">Home</a>
-          <span className="divider">•</span>
-          <a href="#/">Resources</a>
-          <span className="divider">•</span>
-          <a href="#/">Categories</a>
+          <Link to="/">Home</Link>
+          <span className="divider">|</span>
+          <a href="#browse">Resources</a>
+          <span className="divider">|</span>
+          <a href="#learning">Learning Sites</a>
         </nav>
 
         <div className="footer-credit">
           <p>
-            © {currentYear} • Built by&nbsp;
+            (c) {currentYear} | Built by{" "}
             <a
               href="https://github.com/nisharj"
               target="_blank"

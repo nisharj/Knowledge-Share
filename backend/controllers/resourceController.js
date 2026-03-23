@@ -38,7 +38,7 @@ export const getResources = async (req, res) => {
     }
 
     const pageNumber = Math.max(Number(page), 1);
-    const pageLimit = Math.min(Math.max(Number(limit), 1), 50);
+    const pageLimit = Math.min(Math.max(Number(limit), 1), 500);
     const skip = (pageNumber - 1) * pageLimit;
 
     const [resources, total] = await Promise.all([

@@ -1,7 +1,7 @@
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 
-const Navbar = ({ searchText, onSearchChange }) => {
+const Navbar = () => {
   const { token, logout } = useAuth();
   const navigate = useNavigate();
 
@@ -27,7 +27,7 @@ const Navbar = ({ searchText, onSearchChange }) => {
             Dashboard
           </Link>
         ) : null}
-        <button className="btn" onClick={handleAuthAction}>
+        <button type="button" className="btn" onClick={handleAuthAction}>
           {token ? "Logout" : "Login"}
         </button>
       </div>

@@ -1,3 +1,4 @@
+import { useState } from "react";
 import api from "../services/api";
 
 const typeLabel = {
@@ -7,6 +8,8 @@ const typeLabel = {
 };
 
 const ResourceCard = ({ resource, onOpen }) => {
+  const [copyState, setCopyState] = useState("idle");
+
   const openResource = async () => {
     try {
       await api.post(`/resources/${resource._id}/view`);
@@ -18,6 +21,21 @@ const ResourceCard = ({ resource, onOpen }) => {
     onOpen?.();
   };
 
+  const copyLink = async () => {
+    try {
+      if (!navigator.clipboard) {
+        throw new Error("Clipboard unavailable");
+      }
+
+      await navigator.clipboard.writeText(resource.link);
+      setCopyState("copied");
+    } catch (_error) {
+      setCopyState("failed");
+    }
+
+    window.setTimeout(() => setCopyState("idle"), 1800);
+  };
+
   return (
     <article className="card">
       <div className="card-top">
@@ -26,8 +44,10 @@ const ResourceCard = ({ resource, onOpen }) => {
         </span>
         <span className="views">{resource.views || 0} views</span>
       </div>
+
       <h3>{resource.title}</h3>
       <p>{resource.description}</p>
+
       <div className="tags-wrap">
         {resource.tags?.map((tag) => (
           <button key={tag} type="button" className="tag-chip">
@@ -35,15 +55,17 @@ const ResourceCard = ({ resource, onOpen }) => {
           </button>
         ))}
       </div>
+
       <div className="card-actions">
-        <button className="btn" onClick={openResource}>
+        <button type="button" className="btn" onClick={openResource}>
           Open
         </button>
-        <button
-          className="btn ghost"
-          onClick={() => navigator.clipboard.writeText(resource.link)}
-        >
-          Copy Link
+        <button type="button" className="btn ghost" onClick={copyLink}>
+          {copyState === "copied"
+            ? "Copied"
+            : copyState === "failed"
+              ? "Copy failed"
+              : "Copy link"}
         </button>
       </div>
     </article>
