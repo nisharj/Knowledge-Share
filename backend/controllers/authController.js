@@ -1,6 +1,7 @@
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import mongoose from "mongoose";
+import { isDatabaseConnected } from "../config/db.js";
 import Resource from "../models/Resource.js";
 import User from "../models/User.js";
 
@@ -54,8 +55,24 @@ const buildAuthResponse = (user) => ({
   user: serializeUser(user),
 });
 
+const requireDatabase = (res) => {
+  if (isDatabaseConnected()) {
+    return true;
+  }
+
+  res.status(503).json({
+    message:
+      "Authentication is temporarily unavailable because the database is offline.",
+  });
+  return false;
+};
+
 export const register = async (req, res) => {
   try {
+    if (!requireDatabase(res)) {
+      return;
+    }
+
     const { name, email, password } = req.body;
     const validationMessage = validateAuthFields(
       { name, email, password },
@@ -70,7 +87,9 @@ export const register = async (req, res) => {
     const existingUser = await User.findOne({ email: normalizedEmail });
 
     if (existingUser) {
-      return res.status(409).json({ message: "An account already exists for this email" });
+      return res.status(409).json({
+        message: "An account already exists for this email",
+      });
     }
 
     const hashedPassword = await bcrypt.hash(password, 12);
@@ -82,13 +101,17 @@ export const register = async (req, res) => {
     });
 
     return res.status(201).json(buildAuthResponse(user));
-  } catch (error) {
+  } catch (_error) {
     return res.status(500).json({ message: "Registration failed" });
   }
 };
 
 export const login = async (req, res) => {
   try {
+    if (!requireDatabase(res)) {
+      return;
+    }
+
     const { email, password } = req.body;
     const validationMessage = validateAuthFields({ email, password });
 
@@ -118,6 +141,10 @@ export const login = async (req, res) => {
 
 export const getCurrentUser = async (req, res) => {
   try {
+    if (!requireDatabase(res)) {
+      return;
+    }
+
     const user = await User.findById(req.user.id);
 
     if (!user) {
@@ -132,6 +159,10 @@ export const getCurrentUser = async (req, res) => {
 
 export const toggleBookmark = async (req, res) => {
   try {
+    if (!requireDatabase(res)) {
+      return;
+    }
+
     const { resourceId } = req.params;
 
     if (!mongoose.Types.ObjectId.isValid(resourceId)) {
@@ -176,6 +207,10 @@ export const toggleBookmark = async (req, res) => {
 
 export const bootstrapAdmin = async () => {
   try {
+    if (!isDatabaseConnected()) {
+      return;
+    }
+
     const email = process.env.ADMIN_EMAIL;
     const password = process.env.ADMIN_PASSWORD;
 

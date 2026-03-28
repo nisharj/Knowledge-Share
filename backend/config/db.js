@@ -1,5 +1,7 @@
 import mongoose from "mongoose";
 
+export const isDatabaseConnected = () => mongoose.connection.readyState === 1;
+
 export const connectDB = async () => {
   try {
     const mongoUri = process.env.MONGO_URI;
@@ -14,10 +16,11 @@ export const connectDB = async () => {
       maxPoolSize: 10,
       serverSelectionTimeoutMS: 5000,
     });
-    console.log("✓ MongoDB connected successfully");
+    console.log("MongoDB connected successfully");
+    return true;
   } catch (error) {
     console.error(
-      "✗ MongoDB connection failed:",
+      "MongoDB connection failed:",
       error.message || error.toString(),
     );
     console.error("\nTroubleshooting tips:");
@@ -29,6 +32,6 @@ export const connectDB = async () => {
     console.error(
       "4. For local testing, use: mongodb://localhost:27017/knowledge_hub",
     );
-    process.exit(1);
+    return false;
   }
 };

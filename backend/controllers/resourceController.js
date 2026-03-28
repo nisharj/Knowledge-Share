@@ -1,3 +1,4 @@
+import { isDatabaseConnected } from "../config/db.js";
 import Resource from "../models/Resource.js";
 
 const parseCsvTags = (rawTags) => {
@@ -17,6 +18,21 @@ const parseCsvTags = (rawTags) => {
 
 export const getResources = async (req, res) => {
   try {
+    if (!isDatabaseConnected()) {
+      return res.status(200).json({
+        resources: [],
+        pagination: {
+          page: 1,
+          limit: 0,
+          total: 0,
+          totalPages: 0,
+        },
+        degraded: true,
+        message:
+          "Resources are temporarily unavailable because the database is offline.",
+      });
+    }
+
     const { q, type, category, tags, page = 1, limit = 9 } = req.query;
 
     const query = {};
@@ -48,7 +64,7 @@ export const getResources = async (req, res) => {
 
     const totalPages = Math.ceil(total / pageLimit);
 
-    res.status(200).json({
+    return res.status(200).json({
       resources,
       pagination: {
         page: pageNumber,
@@ -57,13 +73,20 @@ export const getResources = async (req, res) => {
         totalPages,
       },
     });
-  } catch (error) {
-    res.status(500).json({ message: "Failed to fetch resources" });
+  } catch (_error) {
+    return res.status(500).json({ message: "Failed to fetch resources" });
   }
 };
 
 export const getResourceById = async (req, res) => {
   try {
+    if (!isDatabaseConnected()) {
+      return res.status(503).json({
+        message:
+          "Resources are temporarily unavailable because the database is offline.",
+      });
+    }
+
     const resource = await Resource.findById(req.params.id);
 
     if (!resource) {
@@ -71,13 +94,19 @@ export const getResourceById = async (req, res) => {
     }
 
     return res.status(200).json(resource);
-  } catch (error) {
+  } catch (_error) {
     return res.status(500).json({ message: "Failed to fetch resource" });
   }
 };
 
 export const incrementResourceView = async (req, res) => {
   try {
+    if (!isDatabaseConnected()) {
+      return res.status(202).json({
+        message: "View tracking skipped because the database is offline.",
+      });
+    }
+
     const resource = await Resource.findByIdAndUpdate(
       req.params.id,
       { $inc: { views: 1 } },
@@ -89,16 +118,21 @@ export const incrementResourceView = async (req, res) => {
     }
 
     return res.status(200).json(resource);
-  } catch (error) {
+  } catch (_error) {
     return res.status(500).json({ message: "Failed to update view count" });
   }
 };
 
 export const createResource = async (req, res) => {
   try {
+    if (!isDatabaseConnected()) {
+      return res.status(503).json({
+        message: "Cannot create resources while the database is offline.",
+      });
+    }
+
     const { title, description, link, type, category, tags } = req.body;
 
-    // Validate required fields
     if (!title || !description || !link || !type) {
       return res.status(400).json({
         message: "Missing required fields: title, description, link, type",
@@ -114,10 +148,10 @@ export const createResource = async (req, res) => {
       tags: parseCsvTags(tags),
     });
 
-    res.status(201).json(resource);
+    return res.status(201).json(resource);
   } catch (error) {
     console.error("Create resource error:", error.message);
-    res.status(400).json({
+    return res.status(400).json({
       message: error.message || "Failed to create resource",
     });
   }
@@ -125,9 +159,14 @@ export const createResource = async (req, res) => {
 
 export const updateResource = async (req, res) => {
   try {
+    if (!isDatabaseConnected()) {
+      return res.status(503).json({
+        message: "Cannot update resources while the database is offline.",
+      });
+    }
+
     const { title, description, link, type, category, tags } = req.body;
 
-    // Validate required fields
     if (!title || !description || !link || !type) {
       return res.status(400).json({
         message: "Missing required fields: title, description, link, type",
@@ -162,6 +201,12 @@ export const updateResource = async (req, res) => {
 
 export const deleteResource = async (req, res) => {
   try {
+    if (!isDatabaseConnected()) {
+      return res.status(503).json({
+        message: "Cannot delete resources while the database is offline.",
+      });
+    }
+
     const resource = await Resource.findByIdAndDelete(req.params.id);
 
     if (!resource) {
@@ -169,18 +214,22 @@ export const deleteResource = async (req, res) => {
     }
 
     return res.status(200).json({ message: "Resource deleted" });
-  } catch (error) {
+  } catch (_error) {
     return res.status(500).json({ message: "Failed to delete resource" });
   }
 };
 
 export const getTrendingResources = async (_req, res) => {
   try {
+    if (!isDatabaseConnected()) {
+      return res.status(200).json([]);
+    }
+
     const resources = await Resource.find({})
       .sort({ views: -1, createdAt: -1 })
       .limit(5);
-    res.status(200).json(resources);
-  } catch (error) {
-    res.status(500).json({ message: "Failed to fetch trending resources" });
+    return res.status(200).json(resources);
+  } catch (_error) {
+    return res.status(500).json({ message: "Failed to fetch trending resources" });
   }
 };

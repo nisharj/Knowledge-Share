@@ -88,9 +88,18 @@ const Home = () => {
         });
 
         setAllResources(response.data.resources);
+        if (response.data.degraded) {
+          setError(
+            response.data.message ||
+              "Resources are temporarily unavailable right now.",
+          );
+        }
       } catch (requestError) {
         console.error("Failed to fetch all resources:", requestError);
-        setError("Unable to load resources right now. Please try again shortly.");
+        setError(
+          requestError.response?.data?.message ||
+            "Unable to load resources right now. Please try again shortly.",
+        );
       } finally {
         setLoading(false);
       }
