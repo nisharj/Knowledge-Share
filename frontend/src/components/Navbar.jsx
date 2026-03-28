@@ -2,11 +2,11 @@ import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 
 const Navbar = () => {
-  const { token, logout } = useAuth();
+  const { authReady, isAdmin, isAuthenticated, user, logout } = useAuth();
   const navigate = useNavigate();
 
   const handleAuthAction = () => {
-    if (token) {
+    if (isAuthenticated) {
       logout();
       navigate("/");
       return;
@@ -22,13 +22,20 @@ const Navbar = () => {
       </Link>
 
       <div className="nav-actions">
-        {token ? (
+        {!authReady ? null : isAuthenticated ? (
+          <span className="nav-user">Hi, {user?.name?.split(" ")[0] || "there"}</span>
+        ) : (
+          <Link className="btn ghost" to="/signup">
+            Sign up
+          </Link>
+        )}
+        {isAdmin ? (
           <Link className="btn ghost" to="/dashboard">
             Dashboard
           </Link>
         ) : null}
         <button type="button" className="btn" onClick={handleAuthAction}>
-          {token ? "Logout" : "Login"}
+          {isAuthenticated ? "Logout" : "Sign in"}
         </button>
       </div>
     </nav>

@@ -7,7 +7,16 @@ const typeLabel = {
   course: "Course",
 };
 
-const ResourceCard = ({ resource, onOpen }) => {
+const ResourceCard = ({
+  resource,
+  onOpen,
+  canBookmark = false,
+  isBookmarked = false,
+  isBookmarkPending = false,
+  activeTags = [],
+  onTagSelect,
+  onToggleBookmark,
+}) => {
   const [copyState, setCopyState] = useState("idle");
 
   const openResource = async () => {
@@ -39,21 +48,50 @@ const ResourceCard = ({ resource, onOpen }) => {
   return (
     <article className="card">
       <div className="card-top">
-        <span className="badge">
-          {typeLabel[resource.type] || resource.type}
-        </span>
-        <span className="views">{resource.views || 0} views</span>
+        <div className="card-meta">
+          <span className="badge">
+            {typeLabel[resource.type] || resource.type}
+          </span>
+          <span className="views">{resource.views || 0} views</span>
+        </div>
+
+        <button
+          type="button"
+          className={`bookmark-btn ${isBookmarked ? "active" : ""}`}
+          onClick={onToggleBookmark}
+          disabled={isBookmarkPending}
+          aria-pressed={isBookmarked}
+        >
+          {isBookmarkPending
+            ? "Saving..."
+            : canBookmark
+              ? isBookmarked
+                ? "Saved"
+                : "Save"
+              : "Sign in to save"}
+        </button>
       </div>
 
       <h3>{resource.title}</h3>
       <p>{resource.description}</p>
 
       <div className="tags-wrap">
-        {resource.tags?.map((tag) => (
-          <button key={tag} type="button" className="tag-chip">
-            #{tag}
-          </button>
-        ))}
+        {resource.tags?.map((tag) => {
+          const normalizedTag = String(tag).trim().toLowerCase();
+
+          return (
+            <button
+              key={tag}
+              type="button"
+              className={`tag-chip ${
+                activeTags.includes(normalizedTag) ? "active" : ""
+              }`}
+              onClick={() => onTagSelect?.(normalizedTag)}
+            >
+              #{normalizedTag}
+            </button>
+          );
+        })}
       </div>
 
       <div className="card-actions">

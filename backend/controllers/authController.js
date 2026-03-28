@@ -1,6 +1,22 @@
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
+import mongoose from "mongoose";
+import Resource from "../models/Resource.js";
 import User from "../models/User.js";
+
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const PASSWORD_REGEX =
+  /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z\d]).{8,}$/;
+
+const normalizeEmail = (email) => String(email || "").trim().toLowerCase();
+
+const serializeUser = (user) => ({
+  id: String(user._id),
+  name: user.name,
+  email: user.email,
+  role: user.role,
+  bookmarks: (user.bookmarks || []).map((bookmark) => String(bookmark)),
+});
 
 const signToken = (user) =>
   jwt.sign(
@@ -11,17 +27,78 @@ const signToken = (user) =>
     },
   );
 
+const validateAuthFields = ({ name, email, password }, isRegister = false) => {
+  if (!email || !password || (isRegister && !name)) {
+    return isRegister
+      ? "Name, email, and password are required"
+      : "Email and password are required";
+  }
+
+  if (!EMAIL_REGEX.test(normalizeEmail(email))) {
+    return "Enter a valid email address";
+  }
+
+  if (isRegister && String(name).trim().length < 2) {
+    return "Name must be at least 2 characters long";
+  }
+
+  if (isRegister && !PASSWORD_REGEX.test(String(password))) {
+    return "Password must be 8+ characters and include uppercase, lowercase, number, and symbol";
+  }
+
+  return "";
+};
+
+const buildAuthResponse = (user) => ({
+  token: signToken(user),
+  user: serializeUser(user),
+});
+
+export const register = async (req, res) => {
+  try {
+    const { name, email, password } = req.body;
+    const validationMessage = validateAuthFields(
+      { name, email, password },
+      true,
+    );
+
+    if (validationMessage) {
+      return res.status(400).json({ message: validationMessage });
+    }
+
+    const normalizedEmail = normalizeEmail(email);
+    const existingUser = await User.findOne({ email: normalizedEmail });
+
+    if (existingUser) {
+      return res.status(409).json({ message: "An account already exists for this email" });
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 12);
+    const user = await User.create({
+      name: String(name).trim(),
+      email: normalizedEmail,
+      password: hashedPassword,
+      role: "user",
+    });
+
+    return res.status(201).json(buildAuthResponse(user));
+  } catch (error) {
+    return res.status(500).json({ message: "Registration failed" });
+  }
+};
+
 export const login = async (req, res) => {
   try {
     const { email, password } = req.body;
+    const validationMessage = validateAuthFields({ email, password });
 
-    if (!email || !password) {
-      return res
-        .status(400)
-        .json({ message: "Email and password are required" });
+    if (validationMessage) {
+      return res.status(400).json({ message: validationMessage });
     }
 
-    const user = await User.findOne({ email: email.toLowerCase() });
+    const user = await User.findOne({ email: normalizeEmail(email) }).select(
+      "+password",
+    );
 
     if (!user) {
       return res.status(401).json({ message: "Invalid credentials" });
@@ -33,18 +110,67 @@ export const login = async (req, res) => {
       return res.status(401).json({ message: "Invalid credentials" });
     }
 
-    const token = signToken(user);
+    return res.status(200).json(buildAuthResponse(user));
+  } catch (_error) {
+    return res.status(500).json({ message: "Login failed" });
+  }
+};
+
+export const getCurrentUser = async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id);
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    return res.status(200).json({ user: serializeUser(user) });
+  } catch (_error) {
+    return res.status(500).json({ message: "Failed to load account" });
+  }
+};
+
+export const toggleBookmark = async (req, res) => {
+  try {
+    const { resourceId } = req.params;
+
+    if (!mongoose.Types.ObjectId.isValid(resourceId)) {
+      return res.status(400).json({ message: "Invalid resource id" });
+    }
+
+    const resourceExists = await Resource.exists({ _id: resourceId });
+
+    if (!resourceExists) {
+      return res.status(404).json({ message: "Resource not found" });
+    }
+
+    const user = await User.findById(req.user.id);
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    const bookmarkId = String(resourceId);
+    const isBookmarked = user.bookmarks.some(
+      (bookmark) => String(bookmark) === bookmarkId,
+    );
+
+    if (isBookmarked) {
+      user.bookmarks = user.bookmarks.filter(
+        (bookmark) => String(bookmark) !== bookmarkId,
+      );
+    } else {
+      user.bookmarks.push(resourceId);
+    }
+
+    await user.save();
 
     return res.status(200).json({
-      token,
-      user: {
-        id: user._id,
-        email: user.email,
-        role: user.role,
-      },
+      bookmarked: !isBookmarked,
+      user: serializeUser(user),
     });
-  } catch (error) {
-    return res.status(500).json({ message: "Login failed" });
+  } catch (_error) {
+    return res.status(500).json({ message: "Failed to update bookmarks" });
   }
 };
 
@@ -60,16 +186,19 @@ export const bootstrapAdmin = async () => {
       return;
     }
 
-    const existing = await User.findOne({ email: email.toLowerCase() });
+    const normalizedEmail = normalizeEmail(email);
+    const existing = await User.findOne({ email: normalizedEmail });
+
     if (existing) {
       console.log("Admin account already exists");
       return;
     }
 
-    const hashedPassword = await bcrypt.hash(password, 10);
+    const hashedPassword = await bcrypt.hash(password, 12);
 
     await User.create({
-      email: email.toLowerCase(),
+      name: "Admin",
+      email: normalizedEmail,
       password: hashedPassword,
       role: "admin",
     });

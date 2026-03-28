@@ -160,6 +160,13 @@ textarea {
   align-items: center;
 }
 
+.card-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  align-items: center;
+}
+
 .badge {
   font-size: 0.82rem;
   background: var(--bg-soft);
@@ -193,6 +200,10 @@ textarea {
   color: #fff;
 }
 
+.tag-count {
+  opacity: 0.7;
+}
+
 .card-actions,
 .nav-actions,
 .pagination-wrap,
@@ -208,8 +219,36 @@ textarea {
   margin-top: auto;
 }
 
+.bookmark-btn,
+.bookmark-toggle,
+.filter-pill,
+.text-btn {
+  border-radius: 999px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.bookmark-btn {
+  border: 1px solid var(--line);
+  background: white;
+  color: var(--ink);
+  padding: 0.45rem 0.8rem;
+}
+
+.bookmark-btn.active,
+.bookmark-toggle.active {
+  border-color: transparent;
+  background: var(--accent);
+  color: white;
+}
+
 .nav-actions {
   justify-content: flex-end;
+}
+
+.nav-user {
+  color: var(--ink-soft);
+  font-weight: 600;
 }
 
 .pagination-wrap {
@@ -236,6 +275,30 @@ textarea {
   background: var(--card);
   display: grid;
   gap: 0.8rem;
+}
+
+.auth-field {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.auth-field span {
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.auth-hint,
+.auth-switch,
+.auth-inline-note {
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: 0.92rem;
+}
+
+.auth-switch a,
+.auth-inline-note a {
+  color: var(--accent);
+  font-weight: 600;
 }
 
 .error {
@@ -487,6 +550,12 @@ textarea {
   margin: 0 0 1rem;
 }
 
+.sidebar-block + .sidebar-block {
+  margin-top: 1.5rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--line);
+}
+
 .category-list {
   display: flex;
   flex-direction: column;
@@ -540,6 +609,11 @@ textarea {
   animation: fadeIn 0.3s ease;
 }
 
+.results-meta {
+  margin: 0.35rem 0 0;
+  color: var(--ink-soft);
+}
+
 .content-header {
   display: flex;
   justify-content: space-between;
@@ -557,6 +631,63 @@ textarea {
   flex: 1;
 }
 
+.content-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.bookmark-toggle {
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.85);
+  color: var(--ink);
+  padding: 0.7rem 1rem;
+}
+
+.filters-panel {
+  display: grid;
+  gap: 1rem;
+  padding: 1rem;
+  margin-bottom: 1.5rem;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.72);
+}
+
+.filters-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.8fr) repeat(2, minmax(180px, 1fr));
+  gap: 0.85rem;
+}
+
+.filter-field {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.filter-field-wide {
+  min-width: 0;
+}
+
+.filter-field-wide .search-input-inline {
+  width: 100%;
+}
+
+.filter-label {
+  font-size: 0.82rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+
+.auth-inline-note {
+  padding: 0.8rem 0.9rem;
+  border: 1px dashed var(--line);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.55);
+}
+
 .search-input-inline {
   width: min(100%, 320px);
   border: 1px solid var(--line);
@@ -567,6 +698,39 @@ textarea {
 
 .search-input-inline::placeholder {
   color: var(--ink-soft);
+}
+
+.active-filters,
+.tag-cloud {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+}
+
+.filter-pill {
+  border: 1px solid var(--line);
+  background: var(--bg-soft);
+  color: var(--ink);
+  padding: 0.5rem 0.8rem;
+}
+
+.filter-panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.text-btn {
+  border: 0;
+  background: transparent;
+  color: var(--accent-2);
+  padding: 0;
+}
+
+.compact-text {
+  margin: 0;
 }
 
 .category-section {
@@ -597,6 +761,17 @@ textarea {
   margin: 0;
   color: var(--ink-soft);
   font-size: 0.9rem;
+}
+
+.empty-state {
+  padding: 1.4rem;
+  border: 1px dashed var(--line);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.5);
+}
+
+.empty-state h3 {
+  margin: 0 0 0.35rem;
 }
 
 .footer {
@@ -797,6 +972,14 @@ textarea {
     align-items: flex-start;
   }
 
+  .filters-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .filter-field-wide {
+    grid-column: 1 / -1;
+  }
+
   .search-input-inline {
     width: 100%;
   }
@@ -829,6 +1012,14 @@ textarea {
     font-size: 1.8rem;
   }
 
+  .content-actions {
+    width: 100%;
+  }
+
+  .bookmark-toggle {
+    flex: 1 1 180px;
+  }
+
   .hero-stats,
   .grid,
   .learning-grid {
@@ -837,6 +1028,10 @@ textarea {
 
   .category-list {
     display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .filters-grid {
     grid-template-columns: 1fr;
   }
 
