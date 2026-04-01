@@ -18,6 +18,9 @@ const parseCsvTags = (rawTags) => {
     .filter(Boolean);
 };
 
+const normalizeResourceType = (value) =>
+  String(value || "").trim().toLowerCase();
+
 export const getResources = async (req, res) => {
   try {
     if (!isDatabaseConnected()) {
@@ -47,7 +50,7 @@ export const getResources = async (req, res) => {
       ];
     }
 
-    if (type) query.type = type;
+    if (type) query.type = normalizeResourceType(type);
     if (category) query.category = category;
 
     const parsedTags = parseCsvTags(tags);
@@ -134,8 +137,9 @@ export const createResource = async (req, res) => {
     }
 
     const { title, description, link, type, category, tags } = req.body;
+    const normalizedType = normalizeResourceType(type);
 
-    if (!title || !description || !link || !type) {
+    if (!title || !description || !link || !normalizedType) {
       return res.status(400).json({
         message: "Missing required fields: title, description, link, type",
       });
@@ -145,7 +149,7 @@ export const createResource = async (req, res) => {
       title: title.trim(),
       description: description.trim(),
       link: link.trim(),
-      type,
+      type: normalizedType,
       category: category || "general",
       tags: parseCsvTags(tags),
     });
@@ -192,8 +196,9 @@ export const updateResource = async (req, res) => {
     }
 
     const { title, description, link, type, category, tags } = req.body;
+    const normalizedType = normalizeResourceType(type);
 
-    if (!title || !description || !link || !type) {
+    if (!title || !description || !link || !normalizedType) {
       return res.status(400).json({
         message: "Missing required fields: title, description, link, type",
       });
@@ -205,7 +210,7 @@ export const updateResource = async (req, res) => {
         title: title.trim(),
         description: description.trim(),
         link: link.trim(),
-        type,
+        type: normalizedType,
         category: category || "general",
         tags: parseCsvTags(tags),
       },

@@ -5,6 +5,7 @@ import Footer from "../components/Footer";
 import LearningWebsites from "../components/LearningWebsites";
 import Navbar from "../components/Navbar";
 import ResourceCard from "../components/ResourceCard";
+import { suggestedResourceTypes } from "../constants/resourceTypes";
 import { useAuth } from "../context/AuthContext";
 import api from "../services/api";
 
@@ -164,6 +165,16 @@ const Home = () => {
       })
       .map(([tag, count]) => ({ tag, count }));
   }, [tagSourceResources]);
+
+  const availableTypes = useMemo(() => {
+    const customTypes = allResources
+      .map((resource) => String(resource.type || "").trim().toLowerCase())
+      .filter(Boolean)
+      .filter((type) => !suggestedResourceTypes.includes(type))
+      .sort((left, right) => left.localeCompare(right));
+
+    return [...new Set([...suggestedResourceTypes, ...customTypes])];
+  }, [allResources]);
 
   const resourcesBeforeCategory = useMemo(
     () =>
@@ -468,7 +479,11 @@ const Home = () => {
 
               <label className="filter-field">
                 <span className="filter-label">Type</span>
-                <Filter value={typeFilter} onChange={setTypeFilter} />
+                <Filter
+                  value={typeFilter}
+                  onChange={setTypeFilter}
+                  options={availableTypes}
+                />
               </label>
 
               <label className="filter-field">

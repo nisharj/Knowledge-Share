@@ -1,5 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
+import {
+  formatResourceTypeLabel,
+  suggestedResourceTypes,
+} from "../constants/resourceTypes";
 import { useAuth } from "../context/AuthContext";
 import api from "../services/api";
 
@@ -7,7 +11,7 @@ const initialForm = {
   title: "",
   description: "",
   link: "",
-  type: "blog",
+  type: "",
   category: "general",
   tags: "",
 };
@@ -80,7 +84,7 @@ const Dashboard = () => {
       setError("Enter a valid resource link");
       return false;
     }
-    if (!form.type) {
+    if (!form.type.trim()) {
       setError("Type is required");
       return false;
     }
@@ -102,12 +106,19 @@ const Dashboard = () => {
 
     setLoading(true);
 
+    const payload = {
+      ...form,
+      type: form.type.trim(),
+      category: form.category.trim(),
+      tags: form.tags.trim(),
+    };
+
     try {
       if (editingId) {
-        await api.put(`/resources/${editingId}`, form);
+        await api.put(`/resources/${editingId}`, payload);
         setSuccess("Resource updated successfully!");
       } else {
-        await api.post("/resources", form);
+        await api.post("/resources", payload);
         setSuccess("Resource published successfully!");
       }
 
@@ -222,11 +233,21 @@ const Dashboard = () => {
           />
 
           <div className="editor-grid">
-            <select name="type" value={form.type} onChange={handleChange}>
-              <option value="blog">Blog</option>
-              <option value="youtube">YouTube</option>
-              <option value="course">Course</option>
-            </select>
+            <input
+              list="resource-type-options"
+              name="type"
+              value={form.type}
+              onChange={handleChange}
+              placeholder="Type (select or type your own)"
+              required
+            />
+            <datalist id="resource-type-options">
+              {suggestedResourceTypes.map((typeOption) => (
+                <option key={typeOption} value={typeOption}>
+                  {formatResourceTypeLabel(typeOption)}
+                </option>
+              ))}
+            </datalist>
             <input
               name="category"
               value={form.category}
@@ -287,7 +308,9 @@ const Dashboard = () => {
                   </div>
                   <div className="table-cell">
                     <span className="cell-label">Type</span>
-                    <span className="cell-value">{resource.type}</span>
+                    <span className="cell-value">
+                      {formatResourceTypeLabel(resource.type)}
+                    </span>
                   </div>
                   <div className="table-cell">
                     <span className="cell-label">Views</span>

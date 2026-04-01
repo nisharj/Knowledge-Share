@@ -19,8 +19,9 @@ const resourceSchema = new mongoose.Schema(
     },
     type: {
       type: String,
-      enum: ["blog", "youtube", "course"],
       required: true,
+      trim: true,
+      lowercase: true,
     },
     category: {
       type: String,

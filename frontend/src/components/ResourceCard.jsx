@@ -1,11 +1,6 @@
 import { useState } from "react";
+import { formatResourceTypeLabel } from "../constants/resourceTypes";
 import api from "../services/api";
-
-const typeLabel = {
-  blog: "Blog",
-  youtube: "YouTube",
-  course: "Course",
-};
 
 const ResourceCard = ({
   resource,
@@ -49,9 +44,7 @@ const ResourceCard = ({
     <article className="card">
       <div className="card-top">
         <div className="card-meta">
-          <span className="badge">
-            {typeLabel[resource.type] || resource.type}
-          </span>
+          <span className="badge">{formatResourceTypeLabel(resource.type)}</span>
           <span className="views">{resource.views || 0} views</span>
         </div>
 
@@ -72,26 +65,28 @@ const ResourceCard = ({
         </button>
       </div>
 
-      <h3>{resource.title}</h3>
-      <p>{resource.description}</p>
+      <div className="card-content">
+        <h3>{resource.title}</h3>
+        <p className="card-description">{resource.description}</p>
 
-      <div className="tags-wrap">
-        {resource.tags?.map((tag) => {
-          const normalizedTag = String(tag).trim().toLowerCase();
+        <div className="tags-wrap">
+          {resource.tags?.map((tag) => {
+            const normalizedTag = String(tag).trim().toLowerCase();
 
-          return (
-            <button
-              key={tag}
-              type="button"
-              className={`tag-chip ${
-                activeTags.includes(normalizedTag) ? "active" : ""
-              }`}
-              onClick={() => onTagSelect?.(normalizedTag)}
-            >
-              #{normalizedTag}
-            </button>
-          );
-        })}
+            return (
+              <button
+                key={tag}
+                type="button"
+                className={`tag-chip ${
+                  activeTags.includes(normalizedTag) ? "active" : ""
+                }`}
+                onClick={() => onTagSelect?.(normalizedTag)}
+              >
+                #{normalizedTag}
+              </button>
+            );
+          })}
+        </div>
       </div>
 
       <div className="card-actions">
