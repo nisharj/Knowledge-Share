@@ -2,6 +2,7 @@ import { isDatabaseConnected } from "../config/db.js";
 import Resource from "../models/Resource.js";
 import User from "../models/User.js";
 import { sendBatchResourceNotifications } from "../services/emailService.js";
+import { rewriteResourceDescription } from "../services/openaiService.js";
 
 const parseCsvTags = (rawTags) => {
   if (!rawTags) return [];
@@ -20,6 +21,33 @@ const parseCsvTags = (rawTags) => {
 
 const normalizeResourceType = (value) =>
   String(value || "").trim().toLowerCase();
+
+export const optimizeResourceDescription = async (req, res) => {
+  try {
+    const { title, description, type, category, tags } = req.body;
+
+    if (!description || !String(description).trim()) {
+      return res.status(400).json({
+        message: "Description is required before AI can optimize it.",
+      });
+    }
+
+    const optimized = await rewriteResourceDescription({
+      title: String(title || "").trim(),
+      description: String(description || "").trim(),
+      type: normalizeResourceType(type),
+      category: String(category || "").trim(),
+      tags: parseCsvTags(tags),
+    });
+
+    return res.status(200).json(optimized);
+  } catch (error) {
+    console.error("Optimize description error:", error.message);
+    return res.status(400).json({
+      message: error.message || "Failed to optimize description",
+    });
+  }
+};
 
 export const getResources = async (req, res) => {
   try {

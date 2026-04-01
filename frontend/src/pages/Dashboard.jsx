@@ -22,6 +22,7 @@ const Dashboard = () => {
   const [form, setForm] = useState(initialForm);
   const [editingId, setEditingId] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [optimizingDescription, setOptimizingDescription] = useState(false);
   const [loadingResources, setLoadingResources] = useState(true);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
@@ -135,6 +136,42 @@ const Dashboard = () => {
     }
   };
 
+  const optimizeDescription = async () => {
+    if (!form.description.trim()) {
+      setError("Add a description first so AI can improve it.");
+      return;
+    }
+
+    setOptimizingDescription(true);
+    setError("");
+    setSuccess("");
+
+    try {
+      const response = await api.post("/resources/optimize-description", {
+        ...form,
+        type: form.type.trim(),
+        category: form.category.trim(),
+        tags: form.tags.trim(),
+      });
+
+      setForm((current) => ({
+        ...current,
+        description: response.data.description,
+      }));
+      setSuccess(
+        `Description optimized with AI${response.data.model ? ` (${response.data.model})` : ""}.`,
+      );
+    } catch (err) {
+      setError(
+        err.response?.data?.message ||
+          err.message ||
+          "Failed to optimize description",
+      );
+    } finally {
+      setOptimizingDescription(false);
+    }
+  };
+
   const startEdit = (resource) => {
     setEditingId(resource._id);
     setForm({
@@ -224,6 +261,19 @@ const Dashboard = () => {
             placeholder="Description"
             required
           />
+          <div className="editor-ai-row">
+            <button
+              type="button"
+              className="btn ghost"
+              onClick={optimizeDescription}
+              disabled={optimizingDescription || !form.description.trim()}
+            >
+              {optimizingDescription ? "Optimizing..." : "Optimize with AI"}
+            </button>
+            <p className="editor-ai-note">
+              Rewrites the description for clarity before you publish.
+            </p>
+          </div>
           <input
             name="link"
             value={form.link}

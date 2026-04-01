@@ -6,6 +6,7 @@ import {
   getResources,
   getTrendingResources,
   incrementResourceView,
+  optimizeResourceDescription,
   updateResource,
 } from "../controllers/resourceController.js";
 import { protectAdmin } from "../middleware/authMiddleware.js";
@@ -21,6 +22,7 @@ router.get("/", getResources);
 router.get("/:id", getResourceById);
 
 // Admin routes
+router.post("/optimize-description", protectAdmin, optimizeResourceDescription);
 router.post("/", protectAdmin, createResource);
 router.put("/:id", protectAdmin, updateResource);
 router.delete("/:id", protectAdmin, deleteResource);
