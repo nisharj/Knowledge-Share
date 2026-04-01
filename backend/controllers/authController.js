@@ -4,6 +4,7 @@ import mongoose from "mongoose";
 import { isDatabaseConnected } from "../config/db.js";
 import Resource from "../models/Resource.js";
 import User from "../models/User.js";
+import { sendNotificationEnabledEmail } from "../services/emailService.js";
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const PASSWORD_REGEX =
@@ -98,6 +99,15 @@ export const register = async (req, res) => {
       email: normalizedEmail,
       password: hashedPassword,
       role: "user",
+    });
+
+    const clientUrl = process.env.CLIENT_URL || "http://localhost:5173";
+
+    sendNotificationEnabledEmail(user, clientUrl).catch((error) => {
+      console.error(
+        "Error sending notification-enabled email:",
+        error.message,
+      );
     });
 
     return res.status(201).json(buildAuthResponse(user));

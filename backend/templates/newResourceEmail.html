@@ -1,0 +1,254 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>New Resource Available</title>
+    <style>
+      body {
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        line-height: 1.6;
+        color: #333;
+        background-color: #f9f9f9;
+        margin: 0;
+        padding: 0;
+      }
+      .container {
+        max-width: 600px;
+        margin: 20px auto;
+        background-color: #ffffff;
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        overflow: hidden;
+      }
+      .header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 30px 20px;
+        text-align: center;
+      }
+      .header h1 {
+        margin: 0;
+        font-size: 28px;
+        font-weight: 600;
+      }
+      .header p {
+        margin: 5px 0 0 0;
+        font-size: 14px;
+        opacity: 0.9;
+      }
+      .logo-area {
+        font-size: 24px;
+        font-weight: bold;
+        margin-bottom: 10px;
+      }
+      .content {
+        padding: 40px 30px;
+      }
+      .greeting {
+        font-size: 16px;
+        margin-bottom: 25px;
+      }
+      .greeting strong {
+        color: #667eea;
+      }
+      .resource-section {
+        background-color: #f5f7fa;
+        border-left: 4px solid #667eea;
+        padding: 20px;
+        margin: 25px 0;
+        border-radius: 4px;
+      }
+      .resource-title {
+        font-size: 20px;
+        font-weight: 600;
+        color: #333;
+        margin-bottom: 10px;
+        word-break: break-word;
+      }
+      .resource-type {
+        display: inline-block;
+        background-color: #667eea;
+        color: white;
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 600;
+        margin-bottom: 15px;
+        text-transform: uppercase;
+      }
+      .resource-category {
+        display: inline-block;
+        background-color: #764ba2;
+        color: white;
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 600;
+        margin-left: 8px;
+        margin-bottom: 15px;
+        text-transform: capitalize;
+      }
+      .resource-description {
+        font-size: 14px;
+        color: #555;
+        line-height: 1.7;
+        margin: 15px 0;
+      }
+      .resource-tags {
+        margin-top: 15px;
+        font-size: 13px;
+      }
+      .tag {
+        display: inline-block;
+        background-color: #e8eaf6;
+        color: #667eea;
+        padding: 4px 10px;
+        border-radius: 15px;
+        margin-right: 8px;
+        margin-bottom: 5px;
+        font-weight: 500;
+      }
+      .cta-button {
+        display: inline-block;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 12px 30px;
+        text-decoration: none;
+        border-radius: 5px;
+        font-weight: 600;
+        margin-top: 20px;
+        text-align: center;
+        transition: transform 0.2s;
+      }
+      .cta-button:hover {
+        transform: translateY(-2px);
+      }
+      .divider {
+        border-top: 1px solid #eee;
+        margin: 30px 0;
+      }
+      .footer {
+        background-color: #f5f7fa;
+        padding: 20px 30px;
+        text-align: center;
+        border-top: 1px solid #eee;
+      }
+      .footer p {
+        margin: 5px 0;
+        font-size: 12px;
+        color: #666;
+      }
+      .footer-links {
+        margin-top: 15px;
+        font-size: 12px;
+      }
+      .footer-links a {
+        color: #667eea;
+        text-decoration: none;
+        margin: 0 10px;
+      }
+      .footer-links a:hover {
+        text-decoration: underline;
+      }
+      .org-info {
+        font-size: 11px;
+        color: #999;
+        margin-top: 15px;
+        font-style: italic;
+      }
+      @media (max-width: 600px) {
+        .content {
+          padding: 25px 20px;
+        }
+        .resource-section {
+          padding: 15px;
+        }
+        .header h1 {
+          font-size: 24px;
+        }
+        .resource-title {
+          font-size: 18px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <!-- Header -->
+      <div class="header">
+        <div class="logo-area">📚 Knowledge Hub</div>
+        <h1>New Resource Available!</h1>
+        <p>Check out our latest addition to the resource library</p>
+      </div>
+
+      <!-- Content -->
+      <div class="content">
+        <div class="greeting">Hello <strong>{{userName}}</strong>,</div>
+
+        <p>
+          We're excited to inform you that a new resource has been added to our
+          Knowledge Hub! Our team is constantly working to bring you the best
+          learning materials.
+        </p>
+
+        <!-- Resource Details -->
+        <div class="resource-section">
+          <div class="resource-title">{{resourceTitle}}</div>
+          <div>
+            <span class="resource-type">{{resourceType}}</span>
+            <span class="resource-category">{{resourceCategory}}</span>
+          </div>
+
+          <div class="resource-description">{{resourceDescription}}</div>
+
+          {{#if resourceTags}}
+          <div class="resource-tags">
+            <strong>Tags:</strong><br />
+            {{#each resourceTags}}
+            <span class="tag">{{this}}</span>
+            {{/each}}
+          </div>
+          {{/if}}
+
+          <a href="{{resourceLink}}" class="cta-button">Read Full Article</a>
+        </div>
+
+        <div class="divider"></div>
+
+        <p>
+          Browse our complete collection of resources to enhance your learning
+          journey and stay updated with the latest content in your field of
+          interest.
+        </p>
+
+        <p style="text-align: center; margin-top: 30px">
+          <a
+            href="{{dashboardLink}}"
+            style="color: #667eea; text-decoration: none; font-weight: 600"
+          >
+            📖 Browse All Resources →
+          </a>
+        </p>
+      </div>
+
+      <!-- Footer -->
+      <div class="footer">
+        <p><strong>Knowledge Hub</strong> - Your Learning Companion</p>
+        <p>Curating quality resources for lifelong learners</p>
+
+        <div class="footer-links">
+          <a href="{{websiteUrl}}">Website</a>
+          <a href="{{contactEmail}}">Support</a>
+        </div>
+
+        <div class="org-info">
+          This is an automated message from Knowledge Hub. Please do not reply
+          directly to this email.
+          <br />
+          © 2024 Knowledge Hub Organization. All rights reserved.
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

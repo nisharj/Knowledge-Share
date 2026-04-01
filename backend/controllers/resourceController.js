@@ -1,5 +1,7 @@
 import { isDatabaseConnected } from "../config/db.js";
 import Resource from "../models/Resource.js";
+import User from "../models/User.js";
+import { sendBatchResourceNotifications } from "../services/emailService.js";
 
 const parseCsvTags = (rawTags) => {
   if (!rawTags) return [];
@@ -148,6 +150,30 @@ export const createResource = async (req, res) => {
       tags: parseCsvTags(tags),
     });
 
+    // Send email notifications to all registered users
+    try {
+      const allUsers = await User.find({ role: "user" }).select("name email");
+
+      if (allUsers.length > 0) {
+        const clientUrl = process.env.CLIENT_URL || "http://localhost:5173";
+
+        // Send notifications asynchronously without blocking the response
+        sendBatchResourceNotifications(allUsers, resource, clientUrl).catch(
+          (error) => {
+            console.error("Error sending batch notifications:", error.message);
+          },
+        );
+
+        console.log(`Queued email notifications for ${allUsers.length} users`);
+      }
+    } catch (emailError) {
+      console.error(
+        "Error fetching users for notifications:",
+        emailError.message,
+      );
+      // Don't fail the resource creation if email notification fails
+    }
+
     return res.status(201).json(resource);
   } catch (error) {
     console.error("Create resource error:", error.message);
@@ -230,6 +256,8 @@ export const getTrendingResources = async (_req, res) => {
       .limit(5);
     return res.status(200).json(resources);
   } catch (_error) {
-    return res.status(500).json({ message: "Failed to fetch trending resources" });
+    return res
+      .status(500)
+      .json({ message: "Failed to fetch trending resources" });
   }
 };
