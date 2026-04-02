@@ -2,22 +2,6 @@ const LearningWebsites = () => {
   const websites = [
     {
       id: 1,
-      name: "Udemy",
-      description: "Learn anything with thousands of courses",
-      url: "https://www.udemy.com",
-      icon: "UD",
-      color: "#A435F0",
-    },
-    {
-      id: 2,
-      name: "Coursera",
-      description: "University-level courses and degrees",
-      url: "https://www.coursera.org",
-      icon: "CO",
-      color: "#1F73E6",
-    },
-    {
-      id: 3,
       name: "Khan Academy",
       description: "Free learning for everyone",
       url: "https://www.khanacademy.org",
@@ -25,7 +9,15 @@ const LearningWebsites = () => {
       color: "#14BF96",
     },
     {
-      id: 4,
+      id: 2,
+      name: "freeCodeCamp",
+      description: "Free coding courses and certifications",
+      url: "https://www.freecodecamp.org",
+      icon: "FC",
+      color: "#0A0A23",
+    },
+    {
+      id: 3,
       name: "YouTube Learning",
       description: "Educational channels and tutorials",
       url: "https://www.youtube.com",
@@ -33,28 +25,36 @@ const LearningWebsites = () => {
       color: "#FF0000",
     },
     {
+      id: 4,
+      name: "MDN Web Docs",
+      description: "Free web development documentation and guides",
+      url: "https://developer.mozilla.org",
+      icon: "MD",
+      color: "#111827",
+    },
+    {
       id: 5,
-      name: "LinkedIn Learning",
-      description: "Professional development courses",
-      url: "https://www.linkedin.com/learning",
-      icon: "LI",
-      color: "#0077B5",
+      name: "MIT OpenCourseWare",
+      description: "Free university course materials from MIT",
+      url: "https://ocw.mit.edu",
+      icon: "MIT",
+      color: "#8C1515",
     },
     {
       id: 6,
-      name: "Skillshare",
-      description: "Creative classes and community",
-      url: "https://www.skillshare.com",
-      icon: "SK",
-      color: "#002333",
+      name: "W3Schools",
+      description: "Free beginner-friendly coding tutorials and references",
+      url: "https://www.w3schools.com",
+      icon: "W3",
+      color: "#059669",
     },
   ];
 
   return (
     <section className="learning-websites-section" id="learning">
       <div className="learning-header">
-        <h2>Popular Learning Websites</h2>
-        <p>Explore these platforms to expand your knowledge</p>
+        <h2>Free Learning Websites</h2>
+        <p>Explore free platforms to expand your knowledge</p>
       </div>
 
       <div className="learning-grid">

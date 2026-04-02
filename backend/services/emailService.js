@@ -125,6 +125,29 @@ const getNotificationEnabledTemplate = ({ userName, websiteUrl }) => `
 
 const buildMailFrom = () => `"Knowledge Hub Team" <${process.env.EMAIL_USER}>`;
 
+const escapeHtml = (value) =>
+  String(value || "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+
+const normalizeSafeLink = (value) => {
+  const trimmed = String(value || "").trim();
+
+  if (!trimmed) {
+    return "";
+  }
+
+  try {
+    const parsedUrl = new URL(trimmed);
+    return ["http:", "https:"].includes(parsedUrl.protocol) ? trimmed : "";
+  } catch (_error) {
+    return "";
+  }
+};
+
 // Send email notification to a user
 export const sendResourceNotificationEmail = async (
   user,
@@ -225,6 +248,80 @@ export const sendNotificationEnabledEmail = async (user, websiteUrl) => {
       ":",
       error.message,
     );
+    return false;
+  }
+};
+
+export const sendChatbotSubmissionEmail = async ({
+  name,
+  topic,
+  message,
+  link,
+  email,
+  currentPath,
+}) => {
+  const transporter = createTransporter();
+
+  if (!transporter) {
+    console.log(
+      "Email service not configured. Skipping chatbot submission email.",
+    );
+    return false;
+  }
+
+  try {
+    const websiteUrl = process.env.CLIENT_URL || DEFAULT_WEBSITE_URL;
+    const subjectTopic = String(topic || "Website feedback").trim();
+    const senderEmail = String(email || "").trim();
+    const safeLink = normalizeSafeLink(link);
+    const html = `
+      <!DOCTYPE html>
+      <html lang="en">
+        <head>
+          <meta charset="UTF-8" />
+          <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+          <title>Chatbot submission</title>
+        </head>
+        <body style="margin:0;padding:24px;background:#f5f7fb;font-family:Arial,sans-serif;color:#111827;">
+          <div style="max-width:640px;margin:0 auto;background:#ffffff;border:1px solid #dbe3ef;border-radius:18px;padding:28px;">
+            <p style="margin:0 0 8px;font-size:12px;letter-spacing:0.08em;text-transform:uppercase;color:#0f766e;font-weight:700;">
+              Knowledge Hub chatbot
+            </p>
+            <h1 style="margin:0 0 20px;font-size:28px;line-height:1.2;">
+              New chatbot submission
+            </h1>
+            <p style="margin:0 0 12px;"><strong>Name:</strong> ${escapeHtml(name)}</p>
+            <p style="margin:0 0 12px;"><strong>Topic:</strong> ${escapeHtml(subjectTopic)}</p>
+            <p style="margin:0 0 12px;"><strong>Email:</strong> ${escapeHtml(senderEmail || "Not provided")}</p>
+            <p style="margin:0 0 12px;"><strong>Reference link:</strong> ${safeLink ? `<a href="${escapeHtml(safeLink)}" style="color:#2563eb;">${escapeHtml(safeLink)}</a>` : "Not provided"}</p>
+            <p style="margin:0 0 12px;"><strong>Page:</strong> ${escapeHtml(currentPath || "/")}</p>
+            <div style="margin-top:20px;padding:18px;border-radius:14px;background:#f8fafc;border:1px solid #e2e8f0;">
+              <p style="margin:0 0 8px;font-weight:700;">Message</p>
+              <p style="margin:0;white-space:pre-wrap;line-height:1.7;">${escapeHtml(message)}</p>
+            </div>
+            <p style="margin:20px 0 0;font-size:14px;color:#6b7280;">
+              Submitted from ${escapeHtml(websiteUrl)}.
+            </p>
+          </div>
+        </body>
+      </html>
+    `;
+
+    const info = await transporter.sendMail({
+      from: buildMailFrom(),
+      to: process.env.ADMIN_EMAIL || DEFAULT_SUPPORT_EMAIL,
+      replyTo: senderEmail || undefined,
+      subject: `[Chatbot] ${subjectTopic}`,
+      html,
+      headers: {
+        "X-Mailer": "Knowledge Hub Chatbot",
+      },
+    });
+
+    console.log("Chatbot submission email sent successfully:", info.messageId);
+    return true;
+  } catch (error) {
+    console.error("Error sending chatbot submission email:", error.message);
     return false;
   }
 };

@@ -6,6 +6,7 @@ import helmet from "helmet";
 import { connectDB, isDatabaseConnected } from "./config/db.js";
 import { bootstrapAdmin } from "./controllers/authController.js";
 import authRoutes from "./routes/authRoutes.js";
+import chatRoutes from "./routes/chatRoutes.js";
 import resourceRoutes from "./routes/resourceRoutes.js";
 
 dotenv.config();
@@ -59,6 +60,7 @@ app.get("/api/health", (_req, res) => {
 // Routes
 app.use("/api/resources", resourceRoutes);
 app.use("/api/auth", authRoutes);
+app.use("/api/chat", chatRoutes);
 
 // 404 handler
 app.use((req, res) => {

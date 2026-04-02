@@ -243,6 +243,10 @@ const Dashboard = () => {
 
         <form id="editor" className="editor" onSubmit={submitResource}>
           <h3>{editingId ? "Edit Resource" : "Add Resource"}</h3>
+          <p className="auth-inline-note">
+            Publish free resources only. Skip paid courses, subscriptions, and
+            trial-gated content so the public catalog stays fully accessible.
+          </p>
 
           {error && <div className="alert alert-error">{error}</div>}
           {success && <div className="alert alert-success">{success}</div>}

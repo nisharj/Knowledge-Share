@@ -319,14 +319,15 @@ const Home = () => {
           Free Learning <span className="italic">Resources</span>
         </h1>
         <p>
-          High-quality resources curated by admin. Explore by category, save
-          bookmarks with your account, and combine filters to find exactly what
-          you need.
+          High-quality free resources curated by admin. Explore by category,
+          save bookmarks with your account, and combine filters to find exactly
+          what you need without paid course recommendations.
         </p>
         <div className="resource-notice">
           <p className="notice-text">
-            Some links may expire or move over time. If you spot a broken
-            resource, let the admin know so it can be refreshed.
+            This collection is intended for free resources only. If you spot a
+            broken link or a paid resource, let the admin know so it can be
+            refreshed or removed.
           </p>
         </div>
         <div className="hero-stats">

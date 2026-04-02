@@ -1,4 +1,5 @@
 import { Navigate, Route, Routes } from "react-router-dom";
+import ChatbotWidget from "./components/ChatbotWidget";
 import { useAuth } from "./context/AuthContext";
 import Dashboard from "./pages/Dashboard";
 import Home from "./pages/Home";
@@ -24,20 +25,23 @@ const AdminRoute = ({ children }) => {
 };
 
 const App = () => (
-  <Routes>
-    <Route path="/" element={<Home />} />
-    <Route path="/login" element={<Login />} />
-    <Route path="/signup" element={<SignUp />} />
-    <Route path="/signin" element={<Navigate to="/login" replace />} />
-    <Route
-      path="/dashboard"
-      element={
-        <AdminRoute>
-          <Dashboard />
-        </AdminRoute>
-      }
-    />
-  </Routes>
+  <>
+    <Routes>
+      <Route path="/" element={<Home />} />
+      <Route path="/login" element={<Login />} />
+      <Route path="/signup" element={<SignUp />} />
+      <Route path="/signin" element={<Navigate to="/login" replace />} />
+      <Route
+        path="/dashboard"
+        element={
+          <AdminRoute>
+            <Dashboard />
+          </AdminRoute>
+        }
+      />
+    </Routes>
+    <ChatbotWidget />
+  </>
 );
 
 export default App;
