@@ -49,4 +49,11 @@ export const getStaticKnowledgeBase = () => [
     content:
       "The chatbot can answer questions about the website and can also collect user feedback, suggested knowledge, or additional information. When users share enough detail, the chatbot can package the name, topic, and message and send it to the admin email address.",
   },
+  {
+    id: "website_owner",
+    title: "Website owner and creator",
+    url: "https://github.com/nisharj",
+    content:
+      "The website owner, admin, and creator is Mohamednishar J. He created this website to help people discover useful free learning resources more easily in one place and make learning more accessible. His GitHub profile is https://github.com/nisharj.",
+  },
 ];
