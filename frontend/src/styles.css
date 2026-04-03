@@ -929,6 +929,7 @@ textarea {
   flex-direction: column;
   align-items: center;
   gap: 1rem;
+  justify-content: flex-start;
   padding: 1.8rem;
   background: var(--card);
   border: 2px solid var(--line);
@@ -938,6 +939,8 @@ textarea {
   cursor: pointer;
   position: relative;
   overflow: hidden;
+  height: 100%;
+  min-height: 330px;
 }
 
 .learning-card::before {
@@ -959,6 +962,38 @@ textarea {
 
 .learning-card:hover::before {
   height: 6px;
+}
+
+.learning-card-add {
+  justify-content: center;
+  gap: 0.6rem;
+  border: 1px dashed var(--line);
+  background: #ffffff;
+  color: var(--ink-soft);
+}
+
+.learning-card-add::before {
+  display: none;
+}
+
+.learning-card-add:hover {
+  border-color: var(--primary);
+  background: var(--bg-soft);
+  box-shadow: none;
+  transform: scale(1.02);
+}
+
+.learning-add-icon {
+  font-size: 3rem;
+  line-height: 1;
+  font-weight: 500;
+  color: var(--primary);
+}
+
+.learning-add-text {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--ink-soft);
 }
 
 .learning-icon {
@@ -989,6 +1024,10 @@ textarea {
   font-size: 0.95rem;
   line-height: 1.4;
   text-align: center;
+  display: -webkit-box;
+  -webkit-line-clamp: 4;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 .learning-link {
@@ -1175,6 +1214,68 @@ textarea {
   width: 100%;
 }
 
+.platform-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+  background: rgba(15, 23, 42, 0.28);
+}
+
+.platform-modal {
+  width: min(100%, 520px);
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  background: #ffffff;
+  box-shadow: 0 24px 64px rgba(15, 23, 42, 0.16);
+  padding: 1.25rem;
+}
+
+.platform-modal-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.platform-modal-header h3 {
+  margin: 0;
+}
+
+.platform-modal-subtitle {
+  margin: 0.35rem 0 0;
+  color: var(--ink-soft);
+}
+
+.platform-modal-close {
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: #ffffff;
+  color: var(--ink-soft);
+  padding: 0.5rem 0.85rem;
+  cursor: pointer;
+}
+
+.platform-form {
+  display: grid;
+  gap: 0.85rem;
+}
+
+.platform-field {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.platform-form-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: 0.35rem;
+}
+
 @media (max-width: 920px) {
   .dashboard-page,
   .browse-section {
@@ -1213,6 +1314,10 @@ textarea {
   .chatbot-panel {
     width: min(100vw - 1.5rem, 420px);
     height: min(78vh, 680px);
+  }
+
+  .platform-modal-header {
+    flex-direction: column;
   }
 }
 
