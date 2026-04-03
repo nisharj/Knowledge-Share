@@ -1,13 +1,14 @@
 :root {
-  --bg: #fdf7ee;
-  --bg-soft: #f8ecdd;
+  --bg: #ffffff;
+  --bg-soft: #f8fafc;
   --card: #ffffff;
-  --ink: #17140f;
-  --ink-soft: #4f463a;
-  --accent: #f26a2e;
-  --accent-2: #0f9a8a;
-  --line: #e8dbc8;
-  --danger: #b42318;
+  --ink: #0f172a;
+  --ink-soft: #6b7280;
+  --primary: #2563eb;
+  --primary-hover: #1d4ed8;
+  --success: #22c55e;
+  --line: #e5e7eb;
+  --danger: #dc2626;
 }
 
 html {
@@ -24,8 +25,8 @@ body {
   font-family: "Space Grotesk", sans-serif;
   color: var(--ink);
   background:
-    radial-gradient(circle at 0% 0%, #ffd9be 0%, transparent 40%),
-    radial-gradient(circle at 95% 20%, #c7f7f0 0%, transparent 35%),
+    radial-gradient(circle at 0% 0%, rgba(37, 99, 235, 0.1) 0%, transparent 38%),
+    radial-gradient(circle at 95% 20%, rgba(148, 163, 184, 0.12) 0%, transparent 35%),
     var(--bg);
 }
 
@@ -92,12 +93,16 @@ textarea {
 
 .btn {
   border: 0;
-  background: linear-gradient(120deg, var(--accent), #f9a03f);
-  color: #20150f;
+  background: linear-gradient(120deg, var(--primary), var(--primary-hover));
+  color: #ffffff;
   padding: 0.65rem 1rem;
   border-radius: 12px;
   cursor: pointer;
   font-weight: 700;
+}
+
+.btn:hover:not(:disabled) {
+  background: var(--primary-hover);
 }
 
 .btn:disabled {
@@ -226,7 +231,7 @@ textarea {
 
 .tag-chip.active {
   border-color: transparent;
-  background: var(--accent-2);
+  background: var(--primary);
   color: #fff;
 }
 
@@ -270,7 +275,7 @@ textarea {
 .bookmark-btn.active,
 .bookmark-toggle.active {
   border-color: transparent;
-  background: var(--accent);
+  background: var(--primary);
   color: white;
 }
 
@@ -329,7 +334,7 @@ textarea {
 
 .auth-switch a,
 .auth-inline-note a {
-  color: var(--accent);
+  color: var(--primary);
   font-weight: 600;
 }
 
@@ -346,15 +351,15 @@ textarea {
 }
 
 .alert-error {
-  background: #ffe0e0;
+  background: rgba(220, 38, 38, 0.08);
   border: 1px solid var(--danger);
   color: var(--danger);
 }
 
 .alert-success {
-  background: #e0f5f0;
-  border: 1px solid var(--accent-2);
-  color: var(--accent-2);
+  background: rgba(34, 197, 94, 0.1);
+  border: 1px solid var(--success);
+  color: var(--success);
 }
 
 @keyframes slideDown {
@@ -505,7 +510,7 @@ textarea {
 }
 
 .table-row {
-  border-bottom: 1px solid #f0e7d8;
+  border-bottom: 1px solid var(--line);
 }
 
 .table-row:last-child {
@@ -541,10 +546,10 @@ textarea {
   text-transform: uppercase;
   font-size: 0.85rem;
   letter-spacing: 2px;
-  color: var(--accent-2);
+  color: var(--primary);
   margin-bottom: 1rem;
   padding: 0.5rem 1rem;
-  border: 1px solid var(--accent-2);
+  border: 1px solid var(--primary);
   border-radius: 999px;
 }
 
@@ -569,7 +574,7 @@ textarea {
   font-size: clamp(1.8rem, 5vw, 3rem);
   font-family: "Fraunces", serif;
   font-weight: 700;
-  color: var(--accent);
+  color: var(--primary);
   margin-bottom: 0.5rem;
 }
 
@@ -625,14 +630,14 @@ textarea {
 }
 
 .category-btn:hover {
-  border-color: var(--accent-2);
-  background: #f9fffe;
+  border-color: var(--primary);
+  background: rgba(37, 99, 235, 0.06);
   transform: translateX(4px);
 }
 
 .category-btn.active {
-  border-color: var(--accent-2);
-  background: var(--accent-2);
+  border-color: var(--primary);
+  background: var(--primary);
   color: white;
   font-weight: 600;
 }
@@ -667,7 +672,7 @@ textarea {
   gap: 1rem;
   margin-bottom: 1.5rem;
   padding-bottom: 1rem;
-  border-bottom: 2px solid var(--accent-2);
+  border-bottom: 2px solid var(--primary);
   transition: all 0.3s ease;
 }
 
@@ -770,7 +775,7 @@ textarea {
 .text-btn {
   border: 0;
   background: transparent;
-  color: var(--accent-2);
+  color: var(--primary);
   padding: 0;
 }
 
@@ -786,7 +791,7 @@ textarea {
 .category-title {
   font-size: 1.3rem;
   font-weight: 700;
-  color: var(--accent);
+  color: var(--primary);
   margin: 0 0 1.2rem;
   padding-bottom: 0.5rem;
   border-bottom: 2px solid var(--line);
@@ -796,7 +801,7 @@ textarea {
 .resource-notice {
   margin: 1rem 0 1.5rem;
   padding: 0.8rem;
-  background: rgba(242, 106, 46, 0.08);
+  background: rgba(37, 99, 235, 0.08);
   border: 1px solid var(--line);
   border-radius: 12px;
   animation: fadeIn 0.4s ease;
@@ -861,7 +866,7 @@ textarea {
 }
 
 .footer-nav a:hover {
-  color: var(--accent);
+  color: var(--primary);
   text-decoration: underline;
 }
 
@@ -877,14 +882,14 @@ textarea {
 }
 
 .footer-credit a {
-  color: var(--accent);
+  color: var(--primary);
   text-decoration: none;
   font-weight: 600;
   transition: color 0.3s ease;
 }
 
 .footer-credit a:hover {
-  color: var(--accent-2);
+  color: var(--primary-hover);
   text-decoration: underline;
 }
 
@@ -995,7 +1000,7 @@ textarea {
 }
 
 .learning-card:hover .learning-link {
-  color: var(--accent-2);
+  color: var(--primary);
 }
 
 .chatbot-shell {
@@ -1013,10 +1018,10 @@ textarea {
   border: 0;
   border-radius: 999px;
   padding: 0.9rem 1.2rem;
-  background: linear-gradient(120deg, var(--accent-2), #73d5c6);
-  color: #06211c;
+  background: linear-gradient(120deg, var(--primary), var(--primary-hover));
+  color: #ffffff;
   font-weight: 700;
-  box-shadow: 0 16px 36px rgba(15, 154, 138, 0.24);
+  box-shadow: 0 16px 36px rgba(37, 99, 235, 0.24);
   cursor: pointer;
 }
 
@@ -1030,7 +1035,7 @@ textarea {
   border: 1px solid rgba(23, 20, 15, 0.08);
   border-radius: 24px;
   background:
-    radial-gradient(circle at top right, rgba(115, 213, 198, 0.22), transparent 35%),
+    radial-gradient(circle at top right, rgba(37, 99, 235, 0.14), transparent 35%),
     rgba(255, 255, 255, 0.96);
   backdrop-filter: blur(18px);
   box-shadow: 0 28px 80px rgba(19, 22, 27, 0.16);
@@ -1053,14 +1058,14 @@ textarea {
   font-size: 0.76rem;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: var(--accent-2);
+  color: var(--primary);
   font-weight: 700;
 }
 
 .chatbot-close {
-  border: 1px solid rgba(15, 154, 138, 0.18);
-  background: rgba(15, 154, 138, 0.1);
-  color: #0b5a51;
+  border: 1px solid rgba(37, 99, 235, 0.18);
+  background: rgba(37, 99, 235, 0.1);
+  color: var(--primary-hover);
   border-radius: 999px;
   padding: 0.45rem 0.8rem;
   font-weight: 700;
@@ -1130,14 +1135,14 @@ textarea {
 .chatbot-message-user {
   align-self: flex-end;
   max-width: 92%;
-  background: linear-gradient(140deg, var(--accent), #f8b15d);
-  color: #26150b;
+  background: linear-gradient(140deg, var(--primary), var(--primary-hover));
+  color: #ffffff;
 }
 
 .chatbot-message-assistant {
   align-self: flex-start;
   width: 100%;
-  background: #fffdf9;
+  background: #ffffff;
   border: 1px solid var(--line);
 }
 
@@ -1156,7 +1161,7 @@ textarea {
 .chatbot-footer {
   margin-top: auto;
   padding-top: 0.85rem;
-  border-top: 1px solid rgba(232, 219, 200, 0.9);
+  border-top: 1px solid rgba(229, 231, 235, 0.95);
   background: linear-gradient(180deg, rgba(255, 255, 255, 0), rgba(255, 255, 255, 0.96) 22%);
 }
 
