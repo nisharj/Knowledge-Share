@@ -3,6 +3,14 @@ import { getStaticKnowledgeBase } from "../data/chatbotKnowledge.js";
 import Resource from "../models/Resource.js";
 import { sendChatbotSubmissionEmail } from "./emailService.js";
 
+const buildClientUrl = (path = "/") => {
+  const baseUrl = String(
+    process.env.CLIENT_URL || "http://localhost:5173",
+  ).replace(/\/$/, "");
+
+  return `${baseUrl}${path.startsWith("/") ? path : `/${path}`}`;
+};
+
 const CHAT_API_URL = `${
   process.env.GROQ_BASE_URL ||
   process.env.OPENAI_BASE_URL ||
@@ -14,6 +22,11 @@ const DEFAULT_CHATBOT_MODEL =
   process.env.GROQ_MODEL ||
   process.env.OPENAI_MODEL ||
   "llama-3.3-70b-versatile";
+
+const MAX_RESOURCE_INDEX_ITEMS = 120;
+const MAX_MATCHED_RESOURCES = 8;
+const MAX_RECENT_RESOURCES = 6;
+const RESOURCE_INDEX_CHUNK_SIZE = 24;
 
 const STOP_WORDS = new Set([
   "a",
@@ -82,6 +95,34 @@ const FEEDBACK_HINTS = [
   "error",
 ];
 
+const RECENCY_HINTS = [
+  "latest",
+  "newest",
+  "recent",
+  "recently",
+  "newly",
+  "just added",
+  "added",
+];
+
+const RESOURCE_DISCOVERY_HINTS = [
+  "resource",
+  "resources",
+  "course",
+  "courses",
+  "tutorial",
+  "tutorials",
+  "guide",
+  "guides",
+  "website",
+  "websites",
+  "tool",
+  "tools",
+];
+
+const COUNT_HINTS = ["how many", "number of", "count", "total"];
+const CATEGORY_HINTS = ["category", "categories"];
+
 const emptyFeedbackDraft = Object.freeze({
   name: "",
   topic: "",
@@ -93,6 +134,63 @@ const emptyFeedbackDraft = Object.freeze({
 const normalizeText = (value) => String(value || "").trim();
 
 const lowerText = (value) => normalizeText(value).toLowerCase();
+
+const formatDateLabel = (value) => {
+  if (!value) {
+    return "unknown";
+  }
+
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return "unknown";
+  }
+
+  return date.toISOString().slice(0, 10);
+};
+
+const summarizeText = (value, maxLength = 180) => {
+  const normalized = normalizeText(value).replace(/\s+/g, " ");
+
+  if (!normalized) {
+    return "";
+  }
+
+  if (normalized.length <= maxLength) {
+    return normalized;
+  }
+
+  return `${normalized.slice(0, maxLength - 3).trim()}...`;
+};
+
+const countBy = (items, getKey) =>
+  items.reduce((result, item) => {
+    const key = normalizeText(getKey(item) || "unknown").toLowerCase();
+
+    if (!key) {
+      return result;
+    }
+
+    result.set(key, (result.get(key) || 0) + 1);
+    return result;
+  }, new Map());
+
+const formatCountMap = (map, limit = 12) =>
+  [...map.entries()]
+    .sort((left, right) => right[1] - left[1] || left[0].localeCompare(right[0]))
+    .slice(0, limit)
+    .map(([key, count]) => `${key} (${count})`)
+    .join(", ") || "none";
+
+const chunkArray = (items, size) => {
+  const chunks = [];
+
+  for (let index = 0; index < items.length; index += size) {
+    chunks.push(items.slice(index, index + size));
+  }
+
+  return chunks;
+};
 
 const sanitizeMessages = (messages) =>
   Array.isArray(messages)
@@ -174,6 +272,46 @@ const inferTopicFromText = (value) => {
 const looksLikeGenericSubmissionTrigger = (value) =>
   GENERIC_SUBMISSION_TRIGGERS.includes(lowerText(value));
 
+const looksLikeRecentResourceQuery = (value) => {
+  const normalized = lowerText(value);
+
+  if (!normalized) {
+    return false;
+  }
+
+  const mentionsRecency = RECENCY_HINTS.some((hint) =>
+    normalized.includes(hint),
+  );
+  const mentionsResources = RESOURCE_DISCOVERY_HINTS.some((hint) =>
+    normalized.includes(hint),
+  );
+
+  return mentionsRecency && mentionsResources;
+};
+
+const looksLikeResourceCountQuery = (value) => {
+  const normalized = lowerText(value);
+
+  if (!normalized) {
+    return false;
+  }
+
+  return (
+    COUNT_HINTS.some((hint) => normalized.includes(hint)) &&
+    RESOURCE_DISCOVERY_HINTS.some((hint) => normalized.includes(hint))
+  );
+};
+
+const looksLikeCategoryQuestion = (value) => {
+  const normalized = lowerText(value);
+
+  if (!normalized) {
+    return false;
+  }
+
+  return CATEGORY_HINTS.some((hint) => normalized.includes(hint));
+};
+
 const looksLikeSubstantiveSubmission = (value) => {
   const normalized = lowerText(value);
 
@@ -250,7 +388,12 @@ You are Knowledge Hub's website chatbot.
 
 Rules:
 - Answer only from the WEBSITE KNOWLEDGE provided in this request.
+- The WEBSITE KNOWLEDGE may include static website pages, a live resource catalog summary, chunked catalog indexes, and exact resource entries from the current database.
 - The website catalog is for free learning resources only. Never recommend paid or premium-only resources.
+- For questions about counts, categories, latest resources, tags, or what exists on the site, prefer exact details from the live catalog knowledge.
+- When the user asks about recently added or newest resources, use the "Added on" dates from the provided knowledge.
+- For resource questions, mention exact resource titles when the knowledge supports them instead of answering vaguely.
+- If several resources match, keep the list short and focused on the best matches from the provided knowledge.
 - If the answer is not supported by the provided knowledge, say so clearly and offer to collect feedback or a resource request.
 - If the user wants to report an issue, share knowledge, request a new resource, or leave feedback, use collect_feedback mode.
 - Extract or update the feedbackDraft with any name, topic, message, reference link, and email details the user provides.
@@ -350,7 +493,60 @@ const buildFallbackResponse = ({
   latestUserMessage,
   feedbackDraft,
   knowledgeDocuments,
+  resourceCatalog,
 }) => {
+  if (looksLikeRecentResourceQuery(latestUserMessage)) {
+    const latestResources = (resourceCatalog?.resources || []).slice(0, 3);
+
+    if (latestResources.length > 0) {
+      return {
+        mode: "answer",
+        reply: `The newest resources I can see are ${latestResources
+          .map(
+            (resource) =>
+              `${resource.title} (${formatDateLabel(resource.createdAt)})`,
+          )
+          .join(", ")}.`,
+        feedbackDraft,
+        shouldEmailAdmin: false,
+        sources: latestResources.map((resource) => ({
+          id: `resource_${resource._id}`,
+          title: resource.title,
+          url: resource.link,
+          content: summarizeText(resource.description),
+        })),
+      };
+    }
+  }
+
+  if (looksLikeResourceCountQuery(latestUserMessage)) {
+    const total = resourceCatalog?.resources?.length || 0;
+
+    if (total > 0) {
+      return {
+        mode: "answer",
+        reply: `I can see ${total} resources in the current website catalog.`,
+        feedbackDraft,
+        shouldEmailAdmin: false,
+        sources: [],
+      };
+    }
+  }
+
+  if (looksLikeCategoryQuestion(latestUserMessage)) {
+    const categories = [...(resourceCatalog?.categoryCounts?.keys() || [])].sort();
+
+    if (categories.length > 0) {
+      return {
+        mode: "answer",
+        reply: `The current catalog categories include ${categories.join(", ")}.`,
+        feedbackDraft,
+        shouldEmailAdmin: false,
+        sources: [],
+      };
+    }
+  }
+
   const sourceMap = new Map(
     knowledgeDocuments.map((document) => [document.id, document]),
   );
@@ -389,40 +585,159 @@ const buildFallbackResponse = ({
   };
 };
 
-const getRelevantStaticDocuments = (query) =>
-  getStaticKnowledgeBase()
-    .map((document) => ({
-      ...document,
-      score: scoreDocument(document, query),
-    }))
-    .sort((left, right) => right.score - left.score)
-    .slice(0, 4)
-    .map(({ score, ...document }) => document);
+const getStaticKnowledgeDocuments = () => getStaticKnowledgeBase();
 
-const getRelevantResources = async (query) => {
-  if (!isDatabaseConnected()) {
-    return [];
+const buildResourceDocument = ({
+  _id,
+  title,
+  description,
+  link,
+  type,
+  category,
+  tags,
+  createdAt,
+  views,
+}) => ({
+  id: `resource_${_id}`,
+  title,
+  url: link,
+  content: `Title: ${title}. Type: ${type}. Category: ${category}. Added on: ${formatDateLabel(
+    createdAt,
+  )}. Views: ${Number(views || 0)}. Tags: ${(tags || []).join(", ") || "none"}. Description: ${summarizeText(
+    description,
+    260,
+  )}`,
+});
+
+const buildCatalogKnowledgeDocuments = (resources) => {
+  if (resources.length === 0) {
+    return {
+      catalogDocuments: [],
+      categoryCounts: new Map(),
+    };
   }
 
+  const categoryCounts = countBy(resources, (resource) => resource.category);
+  const typeCounts = countBy(resources, (resource) => resource.type);
+  const tagCounts = countBy(
+    resources.flatMap((resource) => resource.tags || []),
+    (tag) => tag,
+  );
+  const latestResources = resources.slice(0, 10);
+  const popularResources = [...resources]
+    .sort(
+      (left, right) =>
+        Number(right.views || 0) - Number(left.views || 0) ||
+        new Date(right.createdAt).getTime() - new Date(left.createdAt).getTime(),
+    )
+    .slice(0, 5);
+
+  const summaryDocument = {
+    id: "live_resource_catalog_summary",
+    title: "Live resource catalog summary",
+    url: buildClientUrl("/#browse"),
+    content: `This summary is generated from the current resource database. Total resources: ${
+      resources.length
+    }. Categories: ${formatCountMap(categoryCounts)}. Types: ${formatCountMap(
+      typeCounts,
+    )}. Top tags: ${formatCountMap(tagCounts)}. Latest resources: ${latestResources
+      .map(
+        (resource, index) =>
+          `${index + 1}. ${resource.title} | ${resource.type} | ${
+            resource.category
+          } | added ${formatDateLabel(resource.createdAt)}`,
+      )
+      .join(" || ")}. Most viewed resources: ${popularResources
+      .map(
+        (resource, index) =>
+          `${index + 1}. ${resource.title} (${Number(resource.views || 0)} views)`,
+      )
+      .join(" || ")}.`,
+  };
+
+  const indexedResources = resources.slice(0, MAX_RESOURCE_INDEX_ITEMS);
+
+  const indexDocuments = chunkArray(
+    indexedResources,
+    RESOURCE_INDEX_CHUNK_SIZE,
+  ).map((chunk, chunkIndex) => ({
+      id: `live_resource_catalog_index_${chunkIndex + 1}`,
+      title: `Live resource catalog index ${chunkIndex + 1}`,
+      url: buildClientUrl("/#browse"),
+      content: chunk
+        .map(
+          (resource, resourceIndex) =>
+            `${chunkIndex * RESOURCE_INDEX_CHUNK_SIZE + resourceIndex + 1}. ${
+              resource.title
+            } | ${resource.type} | ${resource.category} | added ${formatDateLabel(
+              resource.createdAt,
+            )} | views ${Number(resource.views || 0)} | tags: ${
+              (resource.tags || []).join(", ") || "none"
+            }`,
+        )
+        .join(" || "),
+    }),
+  );
+
+  summaryDocument.content = `${summaryDocument.content.slice(
+    0,
+    -1,
+  )} Indexed resource rows included below: ${indexedResources.length}.`;
+
+  return {
+    catalogDocuments: [summaryDocument, ...indexDocuments],
+    categoryCounts,
+  };
+};
+
+const getResourceKnowledge = async (query) => {
+  if (!isDatabaseConnected()) {
+    return {
+      resources: [],
+      categoryCounts: new Map(),
+      catalogDocuments: [],
+      relevantResourceDocuments: [],
+    };
+  }
+
+  const isRecentResourceQuery = looksLikeRecentResourceQuery(query);
   const resources = await Resource.find({})
-    .sort({ views: -1, createdAt: -1 })
-    .limit(80)
+    .sort({ createdAt: -1, views: -1 })
     .lean();
 
-  return resources
+  const matchedResources = resources
     .map((resource) => ({
       ...resource,
       score: scoreResource(resource, query),
     }))
     .filter((resource) => resource.score > 0)
     .sort((left, right) => right.score - left.score)
-    .slice(0, 6)
-    .map(({ _id, title, description, link, type, category, tags }) => ({
-      id: `resource_${_id}`,
-      title,
-      url: link,
-      content: `Type: ${type}. Category: ${category}. Tags: ${(tags || []).join(", ") || "none"}. Description: ${description}`,
-    }));
+    .slice(0, MAX_MATCHED_RESOURCES);
+
+  const fallbackRecentResources =
+    isRecentResourceQuery || matchedResources.length < 3
+      ? resources.slice(0, MAX_RECENT_RESOURCES)
+      : [];
+
+  const relevantResourceDocuments = [...matchedResources, ...fallbackRecentResources]
+    .filter(
+      (resource, index, collection) =>
+        collection.findIndex(
+          (candidate) => String(candidate._id) === String(resource._id),
+        ) === index,
+    )
+    .slice(0, MAX_MATCHED_RESOURCES)
+    .map(buildResourceDocument);
+
+  const { catalogDocuments, categoryCounts } =
+    buildCatalogKnowledgeDocuments(resources);
+
+  return {
+    resources,
+    categoryCounts,
+    catalogDocuments,
+    relevantResourceDocuments,
+  };
 };
 
 const mergeFeedbackDraft = (baseDraft, nextDraft) => ({
@@ -456,9 +771,13 @@ export const getChatbotResponse = async ({
   }
 
   const normalizedDraft = normalizeFeedbackDraft(feedbackDraft, visitor);
-  const relevantStaticDocuments = getRelevantStaticDocuments(latestUserMessage);
-  const relevantResources = await getRelevantResources(latestUserMessage);
-  const knowledgeDocuments = [...relevantStaticDocuments, ...relevantResources];
+  const staticKnowledgeDocuments = getStaticKnowledgeDocuments();
+  const resourceCatalog = await getResourceKnowledge(latestUserMessage);
+  const knowledgeDocuments = [
+    ...staticKnowledgeDocuments,
+    ...resourceCatalog.catalogDocuments,
+    ...resourceCatalog.relevantResourceDocuments,
+  ];
   const sourceMap = new Map(
     knowledgeDocuments.map((document) => [document.id, document]),
   );
@@ -543,6 +862,7 @@ export const getChatbotResponse = async ({
       latestUserMessage,
       feedbackDraft: normalizedDraft,
       knowledgeDocuments,
+      resourceCatalog,
     });
 
     return {

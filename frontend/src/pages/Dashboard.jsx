@@ -119,8 +119,16 @@ const Dashboard = () => {
         await api.put(`/resources/${editingId}`, payload);
         setSuccess("Resource updated successfully!");
       } else {
-        await api.post("/resources", payload);
-        setSuccess("Resource published successfully!");
+        const response = await api.post("/resources", payload);
+        const summary = response.data?.notificationSummary;
+
+        if (summary && typeof summary.success === "number") {
+          setSuccess(
+            `Resource published successfully! Notifications sent: ${summary.success}, failed: ${summary.failed}.`,
+          );
+        } else {
+          setSuccess("Resource published successfully!");
+        }
       }
 
       setForm(initialForm);

@@ -182,6 +182,8 @@ export const createResource = async (req, res) => {
       tags: parseCsvTags(tags),
     });
 
+    let notificationSummary = { success: 0, failed: 0 };
+
     // Send email notifications to all registered users
     try {
       const allUsers = await User.find({ role: "user" }).select("name email");
@@ -189,14 +191,15 @@ export const createResource = async (req, res) => {
       if (allUsers.length > 0) {
         const clientUrl = process.env.CLIENT_URL || "http://localhost:5173";
 
-        // Send notifications asynchronously without blocking the response
-        sendBatchResourceNotifications(allUsers, resource, clientUrl).catch(
-          (error) => {
-            console.error("Error sending batch notifications:", error.message);
-          },
+        notificationSummary = await sendBatchResourceNotifications(
+          allUsers,
+          resource,
+          clientUrl,
         );
 
-        console.log(`Queued email notifications for ${allUsers.length} users`);
+        console.log(
+          `Resource notification summary: ${notificationSummary.success} sent, ${notificationSummary.failed} failed`,
+        );
       }
     } catch (emailError) {
       console.error(
@@ -206,7 +209,10 @@ export const createResource = async (req, res) => {
       // Don't fail the resource creation if email notification fails
     }
 
-    return res.status(201).json(resource);
+    return res.status(201).json({
+      ...resource.toObject(),
+      notificationSummary,
+    });
   } catch (error) {
     console.error("Create resource error:", error.message);
     return res.status(400).json({

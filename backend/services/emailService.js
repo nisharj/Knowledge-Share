@@ -8,9 +8,14 @@ const __dirname = path.dirname(__filename);
 const DEFAULT_WEBSITE_URL = process.env.CLIENT_URL || "http://localhost:5173";
 const DEFAULT_SUPPORT_EMAIL =
   process.env.ADMIN_EMAIL || "support@knowledgehub.com";
+let cachedTransporter;
 
 // Initialize email transporter
 const createTransporter = () => {
+  if (cachedTransporter) {
+    return cachedTransporter;
+  }
+
   const emailService = process.env.EMAIL_SERVICE || "gmail";
   const emailUser = process.env.EMAIL_USER;
   const emailPassword = process.env.EMAIL_PASSWORD;
@@ -22,13 +27,15 @@ const createTransporter = () => {
     return null;
   }
 
-  return nodemailer.createTransport({
+  cachedTransporter = nodemailer.createTransport({
     service: emailService,
     auth: {
       user: emailUser,
       pass: emailPassword,
     },
   });
+
+  return cachedTransporter;
 };
 
 // Read and compile email template
@@ -153,9 +160,8 @@ export const sendResourceNotificationEmail = async (
   user,
   resource,
   websiteUrl,
+  transporter = createTransporter(),
 ) => {
-  const transporter = createTransporter();
-
   if (!transporter) {
     console.log(
       "Email service not configured. Skipping notification for user:",
@@ -202,7 +208,13 @@ export const sendResourceNotificationEmail = async (
     console.log("Email sent successfully:", info.messageId);
     return true;
   } catch (error) {
-    console.error("Error sending email to", user.email, ":", error.message);
+    console.error(
+      "Error sending email to",
+      user.email,
+      ":",
+      error.code || "UNKNOWN",
+      error.message,
+    );
     return false;
   }
 };
@@ -246,6 +258,7 @@ export const sendNotificationEnabledEmail = async (user, websiteUrl) => {
       "Error sending notification-enabled email to",
       user.email,
       ":",
+      error.code || "UNKNOWN",
       error.message,
     );
     return false;
@@ -321,7 +334,11 @@ export const sendChatbotSubmissionEmail = async ({
     console.log("Chatbot submission email sent successfully:", info.messageId);
     return true;
   } catch (error) {
-    console.error("Error sending chatbot submission email:", error.message);
+    console.error(
+      "Error sending chatbot submission email:",
+      error.code || "UNKNOWN",
+      error.message,
+    );
     return false;
   }
 };
@@ -341,6 +358,11 @@ export const sendBatchResourceNotifications = async (
 
   let successCount = 0;
   let failedCount = 0;
+  const transporter = createTransporter();
+
+  if (!transporter) {
+    return { success: 0, failed: users.length };
+  }
 
   // Send emails sequentially to avoid overwhelming the email service
   for (const user of users) {
@@ -348,6 +370,7 @@ export const sendBatchResourceNotifications = async (
       user,
       resource,
       websiteUrl,
+      transporter,
     );
     if (sent) {
       successCount++;
